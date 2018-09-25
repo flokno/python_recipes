@@ -11,7 +11,7 @@ module c_supercells
 
     real(c_double),  intent(in) :: cell(3,3)
     real(c_double),  intent(in) :: target_metric(3,3) 
-    integer(c_int), intent(in), value           :: target_size       
+    real(c_double), intent(in), value           :: target_size       
     integer(c_int), intent(out) :: smatrix(3,3)
 
     ! integer(c_int), optional, intent(in)        :: lower_limit, upper_limit                                                       

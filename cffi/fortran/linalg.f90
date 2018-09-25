@@ -2,7 +2,7 @@ module linalg
   contains
   ! FlK: math helpers
   !> Determinant of a 3x3 matrix, doubles
-  function determinant_3x3_real(a) result(det)
+  pure function determinant_3x3_real(a) result(det)
     real*8, dimension(3,3), intent(in) :: a
     real*8 :: det
     !
@@ -12,7 +12,7 @@ module linalg
   end function
 
   !> Trace of a 3x3 matrix, doubles
-  function trace_3x3_real(a) result(trace)
+  pure function trace_3x3_real(a) result(trace)
     real*8, dimension(3,3), intent(in) :: a
     real*8 :: trace
     !
@@ -20,7 +20,7 @@ module linalg
   end function
 
   !> Frobenius norm of a 3x3 matrix, doubles
-  function frobnorm_3x3_real(a) result(frob)
+  pure function frobnorm_3x3_real(a) result(frob)
     real*8, dimension(3,3), intent(in) :: a
     real*8 :: frob
     !
@@ -28,7 +28,7 @@ module linalg
   end function
 
   !> Inverse of 3x3 matrix
-  function matinv3x3(A) result(B)
+  pure function matinv3x3(A) result(B)
     real(8), intent(in) :: A(3,3)   !! Matrix
     real(8)             :: B(3,3)   !! Inverse matrix
     real(8)             :: detinv

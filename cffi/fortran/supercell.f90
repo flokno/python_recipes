@@ -4,11 +4,25 @@ module supercell
   contains
 
     !> Compute deviation from the target metric, given that cell is normed
-    function get_deviation(cell, target_metric) result(deviation)
+    pure function get_deviation(cell, target_metric, norm) result(deviation)
       real*8, dimension(3,3), intent(in) :: cell
       real*8, dimension(3,3), intent(in) :: target_metric
+      logical,      optional, intent(in) :: norm
+      logical                            :: nrm
+      real*8                             :: ncell(3,3)
 
-      deviation = frobnorm_3x3_real(cell - target_metric)
+      nrm = .true.
+      if (present(norm)) nrm = norm
+
+      ! Normalize the input lattice
+      if (nrm) then
+        ncell = cell * (determinant_3x3_real(cell) / determinant_3x3_real(target_metric))**(-1./3.)
+      else
+        ncell = cell
+      end if
+
+      deviation = frobnorm_3x3_real(ncell - target_metric)
+
     end function
 
     !> Find optimal supercell matrix to realize supercell lattice of given
@@ -17,7 +31,7 @@ module supercell
         upper_limit, verbose) result(smatrix)
       real*8,  intent(in)   :: cell(3,3) 
       real*8,  intent(in)   :: target_metric(3,3)
-      integer, intent(in)   :: target_size
+      real*8,  intent(in)   :: target_size
       integer, intent(in)   :: lower_limit, upper_limit
       logical, intent(in)   :: verbose
       integer               :: smatrix(3,3)
@@ -33,7 +47,7 @@ module supercell
       ulim =  2
       vrbs = .false.
       if(present(lower_limit)) llim = lower_limit
-      if(present(upper_limit)) ylim = upper_limit
+      if(present(upper_limit)) ulim = upper_limit
       if(present(verbose))     vrbs = verbose
 
       ! initialize matrices and values
@@ -48,7 +62,7 @@ module supercell
         write(*,*) 'Settings:'
         write (*,"(A,/,3(F7.2))") 'Input cell:   ', cell
         write (*,"(A,/,3(F7.2))") 'Target metric:', target_metric
-        write (*,"(A,3(I5))")     'Target size:  ', target_size
+        write (*,"(A,(F7.2))")    'Target size:  ', target_size
         write (*,"(A,2(I3))")     'Limits:       ', llim, ulim
       end if
 
@@ -102,7 +116,7 @@ module supercell
       if (vrbs) then
         write (*,"(A,/,(F7.3))") 'Best score: ' , best_score
         write (*,"(A,/,3(I7))")  'P:          ' , smatrix
-        write (*,"(A,/,2(I5))")  'N_target, N:' , target_size, nint(determinant_3x3_real(real(smatrix, 8)))
+        write (*,"(A,/,F7.3,I5)")  'N_target, N:' , target_size, nint(determinant_3x3_real(real(smatrix, 8)))
       end if
 
       if (.not. found) write(*,*) 'No supercell matrix found.'

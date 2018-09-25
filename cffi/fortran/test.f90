@@ -21,7 +21,8 @@ program test
   metric(2,1:3) =  (/ 0.d0, 1.d0, 0.d0 /)                                                    
   metric(3,1:3) =  (/ 0.d0, 0.d0, 1.d0 /)
 
-  smatrix = find_optimal_cell(transpose(matrix), metric, 30, verbose=.true.)
+  smatrix = find_optimal_cell(transpose(matrix), metric, 22.2d0, verbose=.true., &
+    lower_limit=-3, upper_limit=3)
   ! smatrix = find_optimal_cell(matrix, metric, 30, verbose=.true.)
   write (*,"(A,/,3(F7.2))") 'Initial Matrix:', matrix 
   write (*,"(A,/,3(I7))") 'Supercell mat.:', smatrix 
