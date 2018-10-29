@@ -1,11 +1,5 @@
-import sys
-
-import numpy as np
-from directions import directions
-
-if sys.version_info[0] > 2:
-    long = int
-
+""" Module to compute Sobol sequences as adapted from SALib:
+    >> github.com/SALib/SALib
 #==============================================================================
 # The following code is based on the Sobol sequence generator by Frances
 # Y. Kuo and Stephen Joe. The license terms are provided below.
@@ -41,6 +35,16 @@ if sys.version_info[0] > 2:
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #==============================================================================
+"""
+
+import sys
+
+import numpy as np
+from directions import directions
+
+if sys.version_info[0] > 2:
+    long = int
+
 
 
 def sample(N, D):
@@ -95,3 +99,31 @@ def index_of_least_significant_zero_bit(value):
         index += 1
 
     return index
+
+def rand(nsamples, dimension, low=100, high=10000, seed=None):
+    """ Return quasi random number similar to np.random.rand
+    
+    Arguments:
+        nsamples {int} -- number of samples
+        dimension {int} -- dimension of each sample
+    
+    Keyword Arguments:
+        low {int} -- discard this many values (default: {100})
+        high {int} -- maximum number to start Sobol series (default: {10000})
+        seed {int} -- seed for initializing the starting point (default: {None})
+    
+    Returns:
+        np.ndarray -- requested list of quasi random numbers
+    """
+
+    if seed:
+        rng = np.random.RandomState(seed)
+    else:
+        rng = np.random
+    
+    # Choose the starting point of the Sobol sequence. Similar to a seed.
+    startpoint = rng.randint(low=low, high=high)
+    sobol_sequence = sample(nsamples + startpoint, dimension)
+
+    return sobol_sequence[startpoint:, :]
+
