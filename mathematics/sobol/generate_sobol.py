@@ -50,7 +50,7 @@ lowest_startingpoint = 100
 highest_startingpoint = 2000
 
 
-def sample(N, D, start=1):
+def sample(N, D):
     """Generate (N x D) numpy array of Sobol sequence samples"""
     scale = 31
     result = np.zeros([N, D])
@@ -88,7 +88,7 @@ def sample(N, D, start=1):
                         V[j] ^= ((a >> (s - 1 - k)) & 1) * V[j - k]
 
         X = long(0)
-        for j in range(start, N + start - 1):
+        for j in range(1, N):
             X ^= V[index_of_least_significant_zero_bit(j - 1)]
             result[j][i] = float(X / np.power(2, scale))
 
