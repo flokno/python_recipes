@@ -94,7 +94,7 @@ def sample(N, D):
 
 def index_of_least_significant_zero_bit(value):
     index = 1
-    while((value & 1) != 0):
+    while (value & 1) != 0:
         value >>= 1
         index += 1
 
