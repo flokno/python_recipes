@@ -45,9 +45,9 @@ from directions import directions
 if sys.version_info[0] > 2:
     long = int
 
-n_samples = 1000
+n_samples = 5000
 lowest_startingpoint = 100
-highest_startingpoint = 2000
+highest_startingpoint = 500
 
 
 def sample(N, D):
@@ -103,17 +103,22 @@ def index_of_least_significant_zero_bit(value):
 
     return index
 
-def rand(dimension, nmax=n_samples, low=lowest_startingpoint, 
-         high=highest_startingpoint, seed=None):
+
+def rand(dimension, nsamples, 
+         low=lowest_startingpoint, 
+         high=highest_startingpoint, 
+         randomize=False,
+         seed=None):
     """ Return quasi random number similar to np.random.rand
     
     Arguments:
+        nsamples {int} -- number of samples
         dimension {int} -- dimension of each sample
-        nmax{int} -- number of samples (default: 1000)
     
     Keyword Arguments:
-        low {int} -- discard this many values (default: {100})
-        high {int} -- maximum number to start Sobol series (default: {2000})
+        low {int} -- discard this many values (default: {500})
+        high {int} -- maximum number to start Sobol series (default: {1000})
+        randomize {bool} -- further randomize the sample afterwards
         seed {int} -- seed for initializing the starting point (default: {None})
     
     Returns:
@@ -126,38 +131,68 @@ def rand(dimension, nmax=n_samples, low=lowest_startingpoint,
         rng = np.random
     
     # Choose the starting point of the Sobol sequence. Similar to a seed.
-    startpoint = rng.randint(low=low, high=high)
-    sobol_sequence = sample(nmax + startpoint, dimension)
+    if randomize:
+        startpoint = rng.randint(low=low, high=high+low)
+    else:
+        startpoint = low
+    sobol_sequence = sample(nsamples + startpoint, dimension)[startpoint:, :]
 
-    return sobol_sequence[startpoint:, :]
+    if randomize:
+        # Randomize by adding random number mod 1 and rolling each sample
+        # randomly
+        sobol_sequence = (sobol_sequence + np.random.rand()) % 1
 
-class QuasiRandomState:
+        # for ii in range(nsamples):
+        #     sobol_sequence[ii] = np.roll(sobol_sequence[ii],
+        #                                  np.random.randint(0, high=dimension))
+
+    return sobol_sequence
+
+
+class RandomState:
     """ Similar to np.random.RandomState, but for Sobol sequences """
 
-    def __init__(self, dimension=None, nmax=n_samples, 
-                 low=lowest_startingpoint, high=highest_startingpoint,
+    def __init__(self, 
+                 dimension, 
+                 nmax=n_samples, 
+                 low=lowest_startingpoint, 
+                 high=highest_startingpoint,
+                 randomize=False,
                  seed=None):
-        """ Initialize the QuasiRandomState """
+        """ Initialize the QuasiRandomState for samples of specific dimension
+        
+        Args:
+            dimension (int): dimension of the samples
+            nmax (int, optional): maximum number of samples (5000)
+            low (int, optional): skip this many samples (100)
+            high (int, optional): skip this many samples (max)
+            randomize (bool, optional): further randomize the sample
+            seed (int, optional): seed for further randomization
+        """
         
         self.nmax = nmax
-        self.dimension = dimension
         self.low = low
         self.high = high
+        self.randomize = randomize
         self.seed = seed
+        self.dimension = np.asarray(dimension)
+
+        # generate the sequence
+        self.sequence = iter(rand(
+            self.dimension.prod(), nmax, low, high, randomize, seed))
+
+
+    def rand(self, nsamples=1):
+        """ return sample(s) from the Sobol sequence
+
+        Args:
+            nsamples (int, optional): Number of samples to return (1)
         
-        if dimension is not None:
-            self.sequence = iter(rand(dimension, nmax, low, high, seed))
-        else:
-            self.sequence = None
+        Returns:
+            ndarray: samples(s) from the Sobol sequence
+        """
 
-    def rand(self, dimension=None):
-        """ Rand method that yields Sobol sequences of dimension D """
-        if self.sequence is None:
-            self.sequence = iter(rand(dimension, self.nmax, self.low, 
-                                      self.high, self.seed))
-            self.dimension = dimension
-
-        if dimension != self.dimension:
-            raise Exception('Dimension changed.')
-
-        return next(self.sequence)
+        sample = np.array([next(self.sequence).reshape(self.dimension)
+                           for _ in range(nsamples)])
+        
+        return np.squeeze(sample)
