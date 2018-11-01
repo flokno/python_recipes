@@ -38,6 +38,7 @@
 """
 
 import sys
+from warnings import warn
 
 import numpy as np
 from directions import directions
@@ -45,6 +46,9 @@ from directions import directions
 if sys.version_info[0] > 2:
     long = int
 
+n_samples = 5000
+lowest_startingpoint = 100
+highest_startingpoint = 500
 
 
 def sample(N, D):
@@ -100,18 +104,27 @@ def index_of_least_significant_zero_bit(value):
 
     return index
 
-def rand(nsamples, dimension, low=100, high=10000, seed=None):
+
+def rand(
+    nsamples,
+    dimension,
+    low=lowest_startingpoint,
+    high=highest_startingpoint,
+    randomize=False,
+    seed=None,
+):
     """ Return quasi random number similar to np.random.rand
-    
+
     Arguments:
         nsamples {int} -- number of samples
         dimension {int} -- dimension of each sample
-    
+
     Keyword Arguments:
-        low {int} -- discard this many values (default: {100})
-        high {int} -- maximum number to start Sobol series (default: {10000})
+        low {int} -- discard this many values (default: {500})
+        high {int} -- maximum number to start Sobol series (default: {1000})
+        randomize {bool} -- further randomize the sample afterwards
         seed {int} -- seed for initializing the starting point (default: {None})
-    
+
     Returns:
         np.ndarray -- requested list of quasi random numbers
     """
@@ -120,10 +133,81 @@ def rand(nsamples, dimension, low=100, high=10000, seed=None):
         rng = np.random.RandomState(seed)
     else:
         rng = np.random
-    
+
     # Choose the starting point of the Sobol sequence. Similar to a seed.
-    startpoint = rng.randint(low=low, high=high)
-    sobol_sequence = sample(nsamples + startpoint, dimension)
+    if randomize:
+        startpoint = rng.randint(low=low, high=high + low)
+    else:
+        startpoint = low
+    sobol_sequence = sample(nsamples + startpoint, dimension)[startpoint:, :]
 
-    return sobol_sequence[startpoint:, :]
+    if randomize:
+        # Randomize by adding random number mod 1
+        sobol_sequence = (sobol_sequence + np.random.rand()) % 1
 
+    return sobol_sequence
+
+
+class RandomState:
+    """ Similar to np.random.RandomState, but for Sobol sequences """
+
+    def __init__(
+        self,
+        dimension,
+        nmax=n_samples,
+        low=lowest_startingpoint,
+        high=highest_startingpoint,
+        randomize=False,
+        seed=None,
+    ):
+        """ Initialize the QuasiRandomState for samples of specific dimension
+
+        Args:
+            dimension (int): dimension of the samples
+            nmax (int, optional): maximum number of samples (5000)
+            low (int, optional): skip this many samples (100)
+            high (int, optional): skip this many samples (max)
+            randomize (bool, optional): further randomize the sample
+            seed (int, optional): seed for further randomization
+        """
+
+        self.nmax = nmax
+        self.low = low
+        self.high = high
+        self.randomize = randomize
+        self.seed = seed
+        self.dimension = np.asarray(dimension)
+
+        # generate the sequence
+        self.sequence = iter(
+            rand(nmax, self.dimension.prod(), low, high, randomize, seed)
+        )
+
+    def rand(self, sample_dimension=1):
+        """ return sample of specific dimension from the Sobol sequence
+
+        Args:
+            samples_dimension (int, optional): Dimension of samples to return
+
+        Returns:
+            ndarray: samples from the Sobol sequence
+        """
+
+        # Make sure the sample_dimension is  an ndarray and has .prod()
+        sample_dimension = np.asarray(sample_dimension)
+        n_samples = sample_dimension.prod()
+        n_samples_to_draw = n_samples // self.dimension.prod() + 1
+
+        # Warn User if the initialization is not commensurate with the sample asked for
+        if n_samples % self.dimension.prod() != 0:
+            print(f"Number for samples:     {n_samples}")
+            print(f"Initializing dimension: {self.dimension.prod()}")
+            warn(
+                "Number of samples not commensurate with the initializing dimension."
+                + " Do not expect to receive quasi random numbers."
+            )
+
+        sample = [next(self.sequence) for _ in range(n_samples_to_draw)]
+        sample = np.array(sample)
+
+        return np.squeeze(sample.flatten()[:n_samples].reshape(sample_dimension))
