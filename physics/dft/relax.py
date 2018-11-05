@@ -9,10 +9,13 @@ from ase.calculators.aims import Aims
 # read input geometry that should be relaxed
 atoms = read("geometry.in", 0, "aims")
 
+# user settings (adjust!)
 # choose a name for an aims working directory
 workdir = "aims"
+port = 12345
+log_name = "relax.log"
+trajectory_name = "relax.traj"
 
-# use settings (adjust!)
 usr_settings = {
     "aims_command": "srun aims.x",
     "species_dir": "/u/fknoop/working/species_defaults/light",
@@ -32,7 +35,7 @@ dft_settings = {
 }
 
 # some more settings that can stay untouched
-aux_settings = {"label": workdir, "use_pimd_wrapper": ("localhost", 12345)}
+aux_settings = {"label": workdir, "use_pimd_wrapper": ("localhost", port)}
 
 # create Aims calculator from the settings
 calc = Aims(**usr_settings, **dft_settings, **aux_settings)
@@ -62,10 +65,12 @@ def tetragonalize(atoms):
 # run the optimization and write out every step
 with SocketIOCalculator(calc, log="socketio.log", port=port) as calc:
     atoms.set_calculator(calc)
-    opt = optimizer(opt_atoms, logfile="relax.log")
+    # create the optimizer for the filtered atoms object
+    opt = optimizer(opt_atoms, logfile=log_name, trajectory=trajectory_name)
     for ii, _ in enumerate(opt.irun(fmax=0.001, steps=20)):
         # tetragonalize the structure
         tetragonalize(atoms)
+        # write out every intermediate structure (not necessary)
         atoms.write(f"{workdir}/geometry.in.next.{ii}", "aims", scaled=True)
 
 # write final result
