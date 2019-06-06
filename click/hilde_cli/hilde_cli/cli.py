@@ -1,4 +1,5 @@
 from pathlib import Path
+import importlib.resources as pkg_resources
 
 import click
 import attr
@@ -18,6 +19,8 @@ class CliTracker:
 
     info_possibilites = attr.ib(default=INFO_POSSIBILITES)
     workflow_possibilites = attr.ib(default=WORKFLOW_POSSIBILITES)
+
+    full_input = attr.ib(default=False)
 
     @property
     def geometry_file(self):
@@ -86,48 +89,56 @@ def settings_info(obj, filename):
     click.echo(obj.settings_file.read_text())
 
 
-@cli.command()
-@click.argument("workflow")
-@click.option("--full", default=False, help="list all options", show_default=True)
+@cli.group()
+@click.option("--full", is_flag=True, help="list all options", show_default=True)
 @click.pass_obj
-def input(obj, workflow, full):
+def input(obj, full):
+    """provide template settings.in for workflows"""
+    obj.full_input = full
+
+
+@input.command("aims")
+@click.argument("filename", default="settings.in")
+@click.option("--allow_overwrite", is_flag=True)
+@click.pass_obj
+def aims_input(obj, filename, allow_overwrite):
     """provide template settings.in for WORKFLOW.
 
     Use `hilde input list` to list all possibilites."""
 
-    if workflow.lower() == "list":
-        click.echo("Possible workflows:")
-        click.echo(obj.workflow_possibilites)
+    from .templates import settings
 
-    elif workflow.lower() == "aims":
-        click.echo(f"{workflow} coming soon")
-
-    elif workflow.lower() == "phonopy":
-        click.echo(f"{workflow} coming soon")
-
-    elif workflow.lower() == "md":
-        click.echo(f"{workflow} coming soon")
-
+    if obj.full_input:
+        template_file = "aims_full"
     else:
-        msg = f"hilde input '{workflow}' not available. "
-        msg += f"Possibilites:\n  {obj.workflow_possibilites}"
-        raise click.UsageError(msg)
+        template_file = "aims"
+
+    template = pkg_resources.read_text(settings, template_file)
+
+    outfile = Path(filename)
+
+    if not allow_overwrite and outfile.exists():
+        msg = f"{outfile} exists."
+        raise click.ClickException(msg)
+
+    outfile.write_text(template)
+
+    click.echo(f"Default {template_file} settings file written to {filename}.")
 
 
-@cli.command()
-@click.argument("workflow")
+@cli.group()
+@click.option("--workdir", help="provide a working directory to run the calculation")
 @click.option("--settings", default="settings.in", show_default=True)
-@click.option("--workdir")
 @click.pass_obj
-def run(obj, workflow, settings, workdir):
-    """run a hilde workflow of type WORKFLOW based on the SETTINGS in directory
-    WORKDIR"""
-
+def run(obj, workdir, settings):
+    """run a hilde workflow"""
+    obj.workdir = workdir
     obj.settings_file = settings
-    click.echo(f"Run workflow {workflow} with settings:")
-    click.echo(obj.settings_file.read_text())
 
-    if workdir:
-        obj.workdir = workdir
-    click.echo(f"Run in {obj.workdir}")
 
+@run.command("aims")
+@click.pass_obj
+def run_aims(obj):
+    """run and aims calculation"""
+
+    click.echo(f"run aims coming soon")

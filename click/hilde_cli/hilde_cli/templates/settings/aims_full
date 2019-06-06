@@ -1,0 +1,14 @@
+[geometry]
+files:                         geometry.in.???
+primitive:                     geometry.in.primitive
+supercell:                     geometry.in.supercell
+
+[control]
+xc:                            pw-lda
+k_grid:                        [2, 2, 2]
+
+[basisset]
+type:                          light
+
+[socketio]
+port:                          12345
