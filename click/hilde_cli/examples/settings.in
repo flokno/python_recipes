@@ -1,0 +1,12 @@
+[geometry]
+file:                          geometry.in
+
+[control]
+xc:                            pw-lda
+k_grid:                        [2, 2, 2]
+
+[basisset]
+type:                          light
+
+[socketio]
+port:                          12345
