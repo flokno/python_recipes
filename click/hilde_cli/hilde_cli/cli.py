@@ -60,20 +60,30 @@ def cli(ctx):
     ctx.help_option_names = ["-h", "--help"]
 
 
-@cli.command()
-@click.argument("mode")
+@cli.group()
+def info():
+    """inform about content of a file"""
+    pass
+
+
+@info.command("geometry")
 @click.argument("filename")
 @click.pass_obj
-def info(obj, mode, filename):
-    """inform about content of a file FILENAME of type MODE"""
+def geometry_info(obj, filename):
+    """inform about content of a geometry file"""
 
-    if mode == "geometry":
-        obj.geometry_file = filename
-        click.echo(obj.geometry_file.read_text())
-    else:
-        msg = f"hilde info '{mode}' not implemented. "
-        msg += f"Possibilites:\n  {obj.info_possibilites}"
-        raise click.UsageError(msg)
+    obj.geometry_file = filename
+    click.echo(obj.geometry_file.read_text())
+
+
+@info.command("settings")
+@click.argument("filename", default="settings.in")
+@click.pass_obj
+def settings_info(obj, filename):
+    """inform about content of a settings.in file"""
+
+    obj.settings_file = filename
+    click.echo(obj.settings_file.read_text())
 
 
 @cli.command()
