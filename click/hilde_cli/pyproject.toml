@@ -11,6 +11,7 @@ authors = ["Florian Knoop <knoop@fhi-berlin.mpg.de>"]
 python = "^3.7"
 click = "^7.0"
 attr = "^0.3.1"
+click_completion = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
