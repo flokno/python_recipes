@@ -1,0 +1,31 @@
+Return-Path: <slurm@mpcdf.mpg.de>
+Received: from m0.fhi-berlin.mpg.de (m0.fhi-berlin.mpg.de [141.14.141.214])
+	 by imap.fhi-berlin.mpg.de with LMTPA;
+	 Mon, 30 Dec 2019 19:43:56 +0100
+X-Sieve: CMU Sieve 2.4
+Received: from m0.fhi-berlin.mpg.de (localhost [127.0.0.1])
+	by localhost (Postfix) with SMTP id EB90BA063D
+	for <knoop@fhi-berlin.mpg.de>; Mon, 30 Dec 2019 19:43:56 +0100 (CET)
+Received: from malve.mpcdf.mpg.de (malve.mpcdf.mpg.de [130.183.9.29])
+	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by m0.fhi-berlin.mpg.de (Postfix) with ESMTPS id E5EF7A029D
+	for <knoop@fhi-berlin.mpg.de>; Mon, 30 Dec 2019 19:43:56 +0100 (CET)
+Received: from sl0.hpc.mpcdf.mpg.de (unknown [10.180.0.13])
+	by malve.mpcdf.mpg.de (Postfix) with ESMTP id B54E2C000050
+	for <knoop@fhi-berlin.mpg.de>; Mon, 30 Dec 2019 19:43:56 +0100 (CET)
+Received: by sl0.hpc.mpcdf.mpg.de (Postfix, from userid 300)
+	id B4022E8; Mon, 30 Dec 2019 19:43:56 +0100 (CET)
+Date: Mon, 30 Dec 2019 19:43:56 +0100
+To: knoop@fhi-berlin.mpg.de
+Subject: COBRA Slurm Job_id=2109033 Name=md|cobra Ended, Run time
+ 09:46:34, COMPLETED, ExitCode 0
+User-Agent: Heirloom mailx 12.5 7/5/10
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <20191230184356.B4022E8@sl0.hpc.mpcdf.mpg.de>
+From: slurm@mpcdf.mpg.de (slurm admin)
+X-PMX-Version: 6.4.8.2820816, Antispam-Engine: 2.7.2.2107409, Antispam-Data: 2019.12.30.183617, AntiVirus-Engine: 5.68.0, AntiVirus-Data: 2019.12.30.5680000
+
+=
