@@ -1,19 +1,14 @@
-#!/usr/bin/env python
-# coding: utf-8
-
+"""provides caching for functions that operate on xarray.DataArrays or xarray.Datasets"""
 import collections
 import hashlib
 import inspect
 import json
+import secrets
 from pathlib import Path
 
 import xarray as xr
 
-
-def get_hash(x):
-    """hash x and digest"""
-    return hashlib.sha1(x).hexdigest()
-
+hash_func = hashlib.sha1
 
 keys = {
     k: k
@@ -26,24 +21,34 @@ keys = {
         "function_signature",
     )
 }
-
 keys = collections.namedtuple("keys", keys.keys())(**keys)
-
 
 _path_cache = Path(keys.cache)
 _path_log = _path_cache / f"{keys.hash}.json"
+_implemented_types = (xr.DataArray, xr.Dataset)
+
+
+def get_hash(x):
+    """hash x and digest"""
+    return hash_func(x).hexdigest()
 
 
 def cached(func):
-    """Provides on-disk cache for a function that accepts and returns an xarray.DataArray"""
+    """On-disk cache for a function that operates on xarray.DataArray or Dataset"""
     name = func.__name__
 
     def _func(array, **kwargs):
+        assert any(isinstance(array, t) for t in _implemented_types)
         signature = get_signature_dict(func, array, kwargs)
         signature_str = json.dumps(signature)
 
         # create hashes
-        hash_input = array.attrs.get(keys.hash, "")  # hash input array
+        if keys.hash in array.attrs:
+            hash_input = array.attrs.get(keys.hash)  # hash input array
+        else:
+            hash_input = secrets.token_hex()
+            print(f"** no input hash found, create random hash:")
+            print(hash_input)
         hash_function = get_hash(signature_str.encode())  # hash the function
         input_function_str = hash_function.encode() + hash_input.encode()
         hash_output = get_hash(input_function_str)  # hash output array
@@ -57,7 +62,7 @@ def cached(func):
             return cache_read(filename)  # return the cached result
 
         # otherwise compute and attach metainfo
-        result = func(array=array, **kwargs)
+        result = func(array, **kwargs)
         attrs = {
             keys.hash_input: hash_input,
             keys.function_signature: signature_str,
@@ -101,8 +106,10 @@ def function_name_from_attrs(attrs):
 
 def cache_filename(array, function_name):
     """determine filename for cache-file from the function name"""
-    assert isinstance(array, xr.DataArray)
-    return str(function_name) + ".nc"
+    if any(isinstance(array, t) for t in _implemented_types):
+        return str(function_name) + ".nc"
+    else:
+        raise NotImplementedError(f"{type(array)} not (yet) implemented.")
 
 
 def cache_write(array, filename):
@@ -118,15 +125,21 @@ def cache_write(array, filename):
 def cache_read(filename):
     """read file in cache folder"""
     path = _path_cache / filename
-    array = xr.load_dataarray(path)
-    return array
+    try:
+        return xr.load_dataarray(path)
+    except ValueError:
+        return xr.load_dataset(path)
 
 
 def get_signature_dict(func, array, kwargs):
-    """add the function signature dictionary"""
+    """add the function signature dictionary. Return default value for args as `None`"""
     s = inspect.signature(func)
     dct = {"__name__": func.__name__}
-    dct.update({k: v.default for (k, v) in s.parameters.items()})
+    for (k, v) in s.parameters.items():
+        if v.default == v.empty:
+            dct.update({k: None})
+        else:
+            dct.update({k: v.default})
     dct.update(kwargs)  # update the signature
     dct.update({"__type__": str(type(array))})  # add data type
     dct.pop("kwargs", None)  # pop literal "kwargs" (if they were empty)
