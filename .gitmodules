@@ -1,0 +1,3 @@
+[submodule "visualization/colormaps/cmocean-gmt"]
+	path = visualization/colormaps/cmocean-gmt
+	url = git@github.com:kthyng/cmocean-gmt.git
